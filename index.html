@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cartoon Malay Man - Three.js Static Demo</title>
+  <style>
+    :root {
+      color-scheme: light;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: Arial, sans-serif;
+      background: radial-gradient(circle at top, #f8fbff 0%, #edf2f7 45%, #dde6ef 100%);
+    }
+
+    #app {
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+
+    #scene-container {
+      width: 100%;
+      height: 100%;
+    }
+
+    .badge {
+      position: absolute;
+      left: 20px;
+      bottom: 20px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.8);
+      border: 1px solid rgba(17, 24, 39, 0.08);
+      backdrop-filter: blur(10px);
+      color: #1f2937;
+      font-size: 14px;
+      box-shadow: 0 8px 30px rgba(15, 23, 42, 0.08);
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div id="scene-container"></div>
+    <div class="badge">Static HTML + Three.js character</div>
+  </div>
+
+  <script type="module">
+    import * as THREE from 'https://unpkg.com/three@0.161.0/build/three.module.js';
+    import { RoundedBoxGeometry } from 'https://unpkg.com/three@0.161.0/examples/jsm/geometries/RoundedBoxGeometry.js';
+
+    const container = document.getElementById('scene-container');
+
+    const scene = new THREE.Scene();
+    scene.background = null;
+
+    const camera = new THREE.PerspectiveCamera(
+      35,
+      container.clientWidth / container.clientHeight,
+      0.1,
+      100
+    );
+    camera.position.set(0, 3.4, 10);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(container.clientWidth, container.clientHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    container.appendChild(renderer.domElement);
+
+    const ambient = new THREE.HemisphereLight(0xffffff, 0xc7d0db, 1.35);
+    scene.add(ambient);
+
+    const key = new THREE.DirectionalLight(0xffffff, 1.6);
+    key.position.set(5, 8, 6);
+    key.castShadow = true;
+    key.shadow.mapSize.set(1024, 1024);
+    scene.add(key);
+
+    const fill = new THREE.DirectionalLight(0xffffff, 0.6);
+    fill.position.set(-4, 5, 4);
+    scene.add(fill);
+
+    const floor = new THREE.Mesh(
+      new THREE.CircleGeometry(6, 40),
+      new THREE.MeshStandardMaterial({ color: 0xe6ebf2, roughness: 1 })
+    );
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.y = -1.2;
+    floor.receiveShadow = true;
+    scene.add(floor);
+
+    function softMaterial(color) {
+      return new THREE.MeshStandardMaterial({
+        color,
+        roughness: 0.78,
+        metalness: 0.08,
+      });
+    }
+
+    function createCartoonMalayMan(options = {}) {
+      const {
+        skinColor = 0xc68b59,
+        shirtColor = 0x4a6cf7,
+        pantsColor = 0x2b2f3a,
+        shoeColor = 0xf5f5f5,
+        hairColor = 0x1f1613,
+        glassesColor = 0xffffff,
+        scale = 1,
+      } = options;
+
+      const group = new THREE.Group();
+      group.name = 'CartoonMalayMan';
+
+      const skinMat = softMaterial(skinColor);
+      const shirtMat = softMaterial(shirtColor);
+      const pantsMat = softMaterial(pantsColor);
+      const shoesMat = softMaterial(shoeColor);
+      const hairMat = softMaterial(hairColor);
+      const glassesMat = new THREE.MeshStandardMaterial({
+        color: glassesColor,
+        roughness: 0.35,
+        metalness: 0.12,
+      });
+      const darkMat = softMaterial(0x222222);
+      const eyeWhiteMat = softMaterial(0xffffff);
+
+      const body = new THREE.Group();
+      group.add(body);
+
+      const torso = new THREE.Mesh(
+        new RoundedBoxGeometry(1.35, 1.7, 0.85, 6, 0.12),
+        shirtMat
+      );
+      torso.position.set(0, 2.7, 0);
+      torso.name = 'torso';
+      body.add(torso);
+
+      const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.2, 0.28, 20), skinMat);
+      neck.position.set(0, 3.7, 0);
+      body.add(neck);
+
+      const head = new THREE.Mesh(new THREE.SphereGeometry(0.72, 28, 28), skinMat);
+      head.scale.set(1.0, 1.08, 0.95);
+      head.position.set(0, 4.5, 0);
+      body.add(head);
+
+      const earGeo = new THREE.SphereGeometry(0.12, 16, 16);
+      const leftEar = new THREE.Mesh(earGeo, skinMat);
+      leftEar.scale.set(0.75, 1.1, 0.65);
+      leftEar.position.set(-0.7, 4.5, 0);
+      body.add(leftEar);
+
+      const rightEar = leftEar.clone();
+      rightEar.position.x = 0.7;
+      body.add(rightEar);
+
+      const hairCap = new THREE.Mesh(
+        new THREE.SphereGeometry(0.73, 28, 28, 0, Math.PI * 2, 0, Math.PI * 0.62),
+        hairMat
+      );
+      hairCap.scale.set(1.02, 0.82, 0.98);
+      hairCap.position.set(0, 4.83, -0.03);
+      hairCap.rotation.x = -0.08;
+      body.add(hairCap);
+
+      const hairStrandGeo = new THREE.SphereGeometry(0.14, 16, 16);
+      const strandPositions = [
+        { x: -0.2, y: 4.98, z: 0.53, s: [1.9, 0.72, 1.0], r: -0.28 },
+        { x: 0.05, y: 4.92, z: 0.58, s: [1.8, 0.68, 1.0], r: -0.08 },
+        { x: 0.28, y: 4.84, z: 0.52, s: [1.6, 0.6, 0.95], r: 0.14 },
+      ];
+
+      strandPositions.forEach((p) => {
+        const strand = new THREE.Mesh(hairStrandGeo, hairMat);
+        strand.scale.set(p.s[0], p.s[1], p.s[2]);
+        strand.position.set(p.x, p.y, p.z);
+        strand.rotation.z = p.r;
+        body.add(strand);
+      });
+
+      const sideHairGeo = new THREE.SphereGeometry(0.16, 14, 14);
+      const leftSideHair = new THREE.Mesh(sideHairGeo, hairMat);
+      leftSideHair.scale.set(0.9, 1.8, 1.2);
+      leftSideHair.position.set(-0.58, 4.58, 0.08);
+      body.add(leftSideHair);
+
+      const rightSideHair = leftSideHair.clone();
+      rightSideHair.scale.set(0.72, 1.45, 1.1);
+      rightSideHair.position.set(0.53, 4.6, 0.08);
+      body.add(rightSideHair);
+
+      const lensGeo = new THREE.TorusGeometry(0.21, 0.035, 12, 28);
+      const leftLens = new THREE.Mesh(lensGeo, glassesMat);
+      leftLens.position.set(-0.25, 4.53, 0.62);
+      body.add(leftLens);
+
+      const rightLens = new THREE.Mesh(lensGeo, glassesMat);
+      rightLens.position.set(0.25, 4.53, 0.62);
+      body.add(rightLens);
+
+      const bridge = new THREE.Mesh(
+        new THREE.CapsuleGeometry(0.025, 0.09, 4, 8),
+        glassesMat
+      );
+      bridge.rotation.z = Math.PI / 2;
+      bridge.position.set(0, 4.53, 0.62);
+      body.add(bridge);
+
+      const leftGlassesArm = new THREE.Mesh(
+        new THREE.CapsuleGeometry(0.018, 0.28, 4, 8),
+        glassesMat
+      );
+      leftGlassesArm.rotation.z = Math.PI / 2.6;
+      leftGlassesArm.rotation.y = 0.22;
+      leftGlassesArm.position.set(-0.48, 4.55, 0.48);
+      body.add(leftGlassesArm);
+
+      const rightGlassesArm = leftGlassesArm.clone();
+      rightGlassesArm.rotation.z = -Math.PI / 2.6;
+      rightGlassesArm.rotation.y = -0.22;
+      rightGlassesArm.position.set(0.48, 4.55, 0.48);
+      body.add(rightGlassesArm);
+
+      const eyeGeo = new THREE.SphereGeometry(0.06, 14, 14);
+      const pupilGeo = new THREE.SphereGeometry(0.026, 12, 12);
+
+      const leftEye = new THREE.Mesh(eyeGeo, eyeWhiteMat);
+      leftEye.position.set(-0.25, 4.52, 0.64);
+      leftEye.scale.set(1, 0.9, 0.7);
+      body.add(leftEye);
+
+      const rightEye = leftEye.clone();
+      rightEye.position.x = 0.25;
+      body.add(rightEye);
+
+      const leftPupil = new THREE.Mesh(pupilGeo, darkMat);
+      leftPupil.position.set(-0.25, 4.5, 0.69);
+      body.add(leftPupil);
+
+      const rightPupil = leftPupil.clone();
+      rightPupil.position.x = 0.25;
+      body.add(rightPupil);
+
+      const browGeo = new THREE.CapsuleGeometry(0.025, 0.18, 4, 8);
+      const leftBrow = new THREE.Mesh(browGeo, hairMat);
+      leftBrow.rotation.z = Math.PI / 2 - 0.18;
+      leftBrow.position.set(-0.24, 4.73, 0.62);
+      body.add(leftBrow);
+
+      const rightBrow = leftBrow.clone();
+      rightBrow.rotation.z = -Math.PI / 2 + 0.18;
+      rightBrow.position.set(0.24, 4.73, 0.62);
+      body.add(rightBrow);
+
+      const nose = new THREE.Mesh(new THREE.SphereGeometry(0.07, 12, 12), skinMat);
+      nose.scale.set(0.75, 1.0, 1.2);
+      nose.position.set(0, 4.33, 0.68);
+      body.add(nose);
+
+      const smile = new THREE.Mesh(
+        new THREE.TorusGeometry(0.13, 0.015, 8, 24, Math.PI),
+        new THREE.MeshStandardMaterial({ color: 0x8c3b3b, roughness: 0.85 })
+      );
+      smile.rotation.z = Math.PI;
+      smile.position.set(0, 4.08, 0.63);
+      body.add(smile);
+
+      const armGeo = new THREE.CapsuleGeometry(0.14, 0.85, 8, 16);
+      const leftArmBody = new THREE.Mesh(armGeo, shirtMat);
+      leftArmBody.position.set(-0.93, 2.78, 0);
+      leftArmBody.rotation.z = 0.22;
+      body.add(leftArmBody);
+
+      const rightArmBody = leftArmBody.clone();
+      rightArmBody.name = 'rightArmBody';
+      rightArmBody.position.x = 0.93;
+      rightArmBody.rotation.z = -0.22;
+      body.add(rightArmBody);
+
+      const handGeo = new THREE.SphereGeometry(0.15, 16, 16);
+      const leftHand = new THREE.Mesh(handGeo, skinMat);
+      leftHand.scale.set(1, 1.15, 0.9);
+      leftHand.position.set(-1.12, 2.17, 0);
+      body.add(leftHand);
+
+      const rightHand = leftHand.clone();
+      rightHand.name = 'rightHand';
+      rightHand.position.x = 1.12;
+      body.add(rightHand);
+
+      const legGeo = new THREE.CapsuleGeometry(0.17, 1.0, 8, 16);
+      const leftLeg = new THREE.Mesh(legGeo, pantsMat);
+      leftLeg.position.set(-0.34, 1.25, 0);
+      body.add(leftLeg);
+
+      const rightLeg = leftLeg.clone();
+      rightLeg.position.x = 0.34;
+      body.add(rightLeg);
+
+      const shoeGeo = new RoundedBoxGeometry(0.42, 0.22, 0.68, 4, 0.08);
+      const leftShoe = new THREE.Mesh(shoeGeo, shoesMat);
+      leftShoe.position.set(-0.34, 0.36, 0.08);
+      leftShoe.rotation.x = 0.04;
+      body.add(leftShoe);
+
+      const rightShoe = leftShoe.clone();
+      rightShoe.position.x = 0.34;
+      body.add(rightShoe);
+
+      const collarLeft = new THREE.Mesh(
+        new THREE.BoxGeometry(0.18, 0.26, 0.04),
+        new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.7 })
+      );
+      collarLeft.position.set(-0.11, 3.45, 0.42);
+      collarLeft.rotation.z = 0.45;
+      body.add(collarLeft);
+
+      const collarRight = collarLeft.clone();
+      collarRight.position.set(0.11, 3.45, 0.42);
+      collarRight.rotation.z = -0.45;
+      body.add(collarRight);
+
+      group.scale.setScalar(scale);
+
+      group.traverse((obj) => {
+        if (obj.isMesh) {
+          obj.castShadow = true;
+          obj.receiveShadow = true;
+        }
+      });
+
+      return group;
+    }
+
+    function createSpeechBubble(text = 'Hi!') {
+      const canvas = document.createElement('canvas');
+      canvas.width = 512;
+      canvas.height = 256;
+      const ctx = canvas.getContext('2d');
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#ffffff';
+      ctx.strokeStyle = '#1f2937';
+      ctx.lineWidth = 10;
+
+      const x = 28;
+      const y = 24;
+      const w = 390;
+      const h = 150;
+      const r = 28;
+
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + w - r, y);
+      ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+      ctx.lineTo(x + w, y + h - r);
+      ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+      ctx.lineTo(x + 135, y + h);
+      ctx.lineTo(x + 110, y + h + 36);
+      ctx.lineTo(x + 95, y + h);
+      ctx.lineTo(x + r, y + h);
+      ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+      ctx.lineTo(x, y + r);
+      ctx.quadraticCurveTo(x, y, x + r, y);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#111827';
+      ctx.font = 'bold 64px Arial';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(text, x + w / 2, y + h / 2 + 4);
+
+      const texture = new THREE.CanvasTexture(canvas);
+      texture.needsUpdate = true;
+
+      const material = new THREE.SpriteMaterial({
+        map: texture,
+        transparent: true,
+        depthWrite: false,
+      });
+
+      const sprite = new THREE.Sprite(material);
+      sprite.scale.set(2.8, 1.4, 1);
+      sprite.position.set(1.8, 4.9, 0);
+      sprite.visible = false;
+      return sprite;
+    }
+
+    function updateCartoonMalayMan(model, elapsedTime, state = {}) {
+      if (!model) return;
+
+      const introProgress = state.introProgress ?? 1;
+      const waveAmount = state.waveAmount ?? 0;
+
+      model.rotation.y = Math.sin(elapsedTime * 0.8) * 0.08;
+      model.position.y = (state.baseY ?? 0) + Math.sin(elapsedTime * 1.6) * 0.03;
+
+      const torso = model.getObjectByName('torso');
+      if (torso) {
+        torso.rotation.z = Math.sin(elapsedTime * 1.2) * 0.01;
+      }
+
+      const rightArm = model.getObjectByName('rightArmBody');
+      if (rightArm) {
+        rightArm.rotation.z = -0.22 - waveAmount * 0.9 + Math.sin(elapsedTime * 8.5) * 0.12 * waveAmount;
+        rightArm.rotation.x = Math.sin(elapsedTime * 4.5) * 0.04 * waveAmount;
+      }
+
+      const rightHand = model.getObjectByName('rightHand');
+      if (rightHand) {
+        rightHand.rotation.z = Math.sin(elapsedTime * 10) * 0.2 * waveAmount;
+      }
+
+      model.scale.setScalar((state.baseScale ?? 1) * (0.92 + introProgress * 0.08));
+    }
+
+    function clamp01(v) {
+      return Math.max(0, Math.min(1, v));
+    }
+
+    function easeOutBack(x) {
+      const c1 = 1.70158;
+      const c3 = c1 + 1;
+      return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2);
+    }
+
+    const model = createCartoonMalayMan();
+    model.position.y = -0.2;
+    scene.add(model);
+
+    const speechBubble = createSpeechBubble('Hi!');
+    scene.add(speechBubble);
+
+    const clock = new THREE.Clock();
+    const state = {
+      baseY: -0.2,
+      baseScale: 1,
+      introProgress: 0,
+      waveAmount: 0,
+    };
+
+    const timings = {
+      introDuration: 1.2,
+      bubbleDelay: 0.5,
+      bubbleFadeDuration: 0.35,
+      bubbleShowDuration: 3.2,
+      waveStart: 0.35,
+      waveEnd: 2.8,
+    };
+
+    function animate() {
+      const t = clock.getElapsedTime();
+
+      const introT = clamp01(t / timings.introDuration);
+      state.introProgress = easeOutBack(introT);
+      state.baseY = -1.15 + state.introProgress * 0.95;
+
+      const waveT = clamp01((t - timings.waveStart) / (timings.waveEnd - timings.waveStart));
+      state.waveAmount = waveT < 1 ? waveT : Math.max(0, 1 - (t - timings.waveEnd) * 1.5);
+
+      const bubbleIn = clamp01((t - timings.bubbleDelay) / timings.bubbleFadeDuration);
+      const bubbleOut = clamp01((t - (timings.bubbleDelay + timings.bubbleShowDuration)) / timings.bubbleFadeDuration);
+      const bubbleVisibility = bubbleIn * (1 - bubbleOut);
+
+      speechBubble.visible = bubbleVisibility > 0.01;
+      speechBubble.material.opacity = bubbleVisibility;
+      speechBubble.position.y = 4.9 + (1 - bubbleVisibility) * 0.18;
+      speechBubble.scale.set(2.6 + bubbleVisibility * 0.2, 1.3 + bubbleVisibility * 0.1, 1);
+
+      updateCartoonMalayMan(model, t, state);
+      renderer.render(scene, camera);
+      requestAnimationFrame(animate);
+    }
+
+    animate();
+
+    function onResize() {
+      camera.aspect = container.clientWidth / container.clientHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(container.clientWidth, container.clientHeight);
+    }
+
+    window.addEventListener('resize', onResize);
+  </script>
+</body>
+</html>
